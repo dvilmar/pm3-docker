@@ -16,7 +16,7 @@ En Windows + WSL2, WSL2 es una VM ligera de Hyper-V que **no tiene acceso direct
 Proxmark3 (USB físico)
 → Windows
 → usbipd (comparte el USB)
-→ WSL2 (ahora lo ve en /dev/ttyACM0)
+→ WSL2 (ahora lo ve mediante USB/IP)
 → Docker con -v /dev/bus/usb (el contenedor lo ve)
 
 
@@ -30,26 +30,41 @@ docker build -t kali-pm3 .
 
 **1. Instalar usbipd en Windows** (PowerShell como Administrador, una sola vez):
 
-winget install usbipd
+winget install --id dorssel.usbipd-win
 
-Reinicia PowerShell después de instalarlo.
+Cierra PowerShell y abre uno nuevo después de instalarlo.
 
 **2. Conectar el Proxmark3 por USB al PC**, luego listar dispositivos:
 
 usbipd list
 
-Busca la línea del Proxmark3 y anota su `BUSID` (ej: `1-4`).
+Busca la línea del Proxmark3. Normalmente aparecerá identificado como:
+
+Dispositivo serie USB (COM8)
+
+Anota su `BUSID` (ej: `2-7`).
 
 **3. Compartir y adjuntar el dispositivo a WSL2:**
 
 usbipd bind --busid <BUSID>
 usbipd attach --wsl --busid <BUSID>
 
+Por ejemplo:
+
+usbipd bind --busid 2-7
+usbipd attach --wsl --busid 2-7
+
 Repite el `usbipd attach` cada vez que reconectes el dispositivo o reinicies WSL2.
 
 **4. Verificar en WSL/Kali (fuera del contenedor):**
 
 lsusb
+
+El Proxmark3 debería aparecer como:
+
+9ac4:4b8f proxmark.org proxmark3
+
+> Nota: el Proxmark3 puede aparecer correctamente en `lsusb` sin crear `/dev/ttyACM0`. Para Docker se pasa directamente el bus USB mediante `/dev/bus/usb`.
 
 ## Levantar el contenedor
 
@@ -64,14 +79,23 @@ docker start -ai kali-pm3
 
 ## Dentro del contenedor
 
+Comprueba primero que Docker puede ver el Proxmark3:
+
 lsusb
-ls /dev/ttyACM*
-proxmark3 /dev/ttyACM0
+
+Debería aparecer:
+
+9ac4:4b8f proxmark.org proxmark3
+
+Después inicia el cliente Proxmark3:
+
+proxmark3
 
 Dentro del prompt del cliente, prueba:
 
 hw version
 
+> No es necesario usar `/dev/ttyACM0` cuando el Proxmark3 se está pasando al contenedor mediante `/dev/bus/usb`.
 
 ## Clonar y correr en otro equipo
 
