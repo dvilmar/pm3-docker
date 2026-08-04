@@ -13,7 +13,9 @@ RUN git clone https://github.com/RfidResearchGroup/proxmark3.git /opt/proxmark3
 
 WORKDIR /opt/proxmark3
 
-RUN make clean && make client -j$(nproc) && make installclient
+RUN make clean && make client -j$(nproc)
+
+ENV PATH="/opt/proxmark3/client:${PATH}"
 
 WORKDIR /root
 CMD ["/bin/bash"]
